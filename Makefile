@@ -14,7 +14,7 @@ SRCS := $(wildcard $(SRC_DIR)/*.c) $(wildcard $(GB_DIR)/*.c)
 OBJS := $(patsubst %.c,$(BUILD_DIR)/%.o,$(SRCS))
 
 # Executable
-TARGET = editor
+TARGET = ceditor
 
 # Default rule
 all: $(BUILD_DIR) $(TARGET)

@@ -1,5 +1,8 @@
-# windows build stuff
+# build stuff
 build/
+
+# cedit result executable
+ceditor
 
 # program
 *.exe
