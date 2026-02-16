@@ -1,0 +1,7 @@
+# windows build stuff
+build/
+
+# program
+*.exe
+*.out
+*.o
