@@ -1,35 +1,35 @@
 # Makefile for cedit
 
-# Compiler and flags
 CC = gcc
-CFLAGS = -Wall -Wextra -g -Igapbuffer/src
 
-# Directories
 SRC_DIR = src
-GB_DIR = gapbuffer/src
+INC_DIR = include
 BUILD_DIR = build
 
-# All .c files
-SRCS := $(wildcard $(SRC_DIR)/*.c) $(wildcard $(GB_DIR)/*.c)
-OBJS := $(patsubst %.c,$(BUILD_DIR)/%.o,$(SRCS))
+INCLUDES = -I$(INC_DIR)
 
-# Executable
-TARGET = ceditor
+CFLAGS = -Wall -Wextra -g $(INCLUDES) -MMD -MP
 
-# Default rule
-all: $(BUILD_DIR) $(TARGET)
+SRCS := $(wildcard $(SRC_DIR)/*.c)
 
-# Build executable
+OBJS := $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/%.o,$(SRCS))
+
+DEPS := $(OBJS:.o=.d)
+
+TARGET = $(BUILD_DIR)/ceditor
+
+all: $(TARGET)
+
 $(TARGET): $(OBJS)
 	$(CC) $(CFLAGS) $^ -o $@
 
-# Compile .c -> .o
-$(BUILD_DIR)/%.o: %.c
-	@mkdir -p $(dir $@)
+$(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
+	@mkdir -p $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-# Clean build artifacts
 clean:
-	rm -rf $(BUILD_DIR) $(TARGET)
+	rm -rf $(BUILD_DIR)
+
+-include $(DEPS)
 
 .PHONY: all clean

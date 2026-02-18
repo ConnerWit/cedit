@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include "gb.h"
 
-int main(void) {
+int main() {
 
     return 0;
 }
