@@ -54,9 +54,9 @@ This produces the binary: `build/ceditor`
 
 - `filename` is optional. If provided, the file will be loaded into the editor.
 - Basic key bindings (Phase 0):
-  - `Ctrl-S` → Save file
-  - `Ctrl-Q` → Quit editor (prompts if there are unsaved changes)
-  - `W` / `S` → Scroll up / down through file
+  - `ctrl-s` → Save file
+  - `ctrl-q` → Quit editor (prompts if there are unsaved changes)
+  - `k` / `j` → Scroll up / down through file
 
 ---
 
