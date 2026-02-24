@@ -1,0 +1,8 @@
+Line 1: Hello, CEditor!
+Line 2: This is a test file.
+Line 3: We are testing scrolling.
+Line 4: Add more lines to exceed the terminal height.
+Line 5: Keep going...
+Line 6: Almost there...
+Line 7: One more line.
+Line 8: End of file.

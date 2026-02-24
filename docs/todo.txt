@@ -1,4 +1,4 @@
-phase 0: fundamental setup
+phase 0: fundamental setup [DONE]
     main function loop
     basic file to buffer writing
     save buffer to file or new file
