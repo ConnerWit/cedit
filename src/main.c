@@ -123,7 +123,7 @@ void load_file(char *fpath[], Editor *editor){
     free(tmp);
 
     editor->dirty = false;
-    snprintf(editor->status_msg, sizeof(editor->status_msg), "Opened file: %s", *fpath);
+    snprintf(editor->status_msg, sizeof(editor->status_msg), "opened file: %s", *fpath);
 }
 
 void save_file(const char *fpath, Editor *editor) {
@@ -275,7 +275,7 @@ void handle_input(char key, Editor *editor, const char *filename) {
             if (!editor->quit_pending) {
                 editor->quit_pending = true;
                 snprintf(editor->status_msg, sizeof(editor->status_msg),
-                         "Press Ctrl-Q again to quit.");
+                         "press ctrl-q again to quit.");
             } else {
                 editor->is_running = false;
             }
@@ -284,16 +284,16 @@ void handle_input(char key, Editor *editor, const char *filename) {
 
         case '\x13': // ctrl-s
             if (filename) save_file(filename, editor);
-            else snprintf(editor->status_msg, sizeof(editor->status_msg), "No filename provided.");
+            else snprintf(editor->status_msg, sizeof(editor->status_msg), "no filename provided.");
             needs_render = true;
             break;
 
-        case 'w':
+        case 'k':
             if (editor->row_offset > 0) editor->row_offset--;
             needs_render = true;
             break;
 
-        case 's':
+        case 'j':
             editor->row_offset++;
             needs_render = true;
             break;
