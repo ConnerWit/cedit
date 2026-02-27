@@ -77,7 +77,6 @@ This produces the binary: `build/ceditor`
 - Navigation (`h`, `j`, `k`, `l`)
 - Basic insertion/deletion (typing, backspace, delete)
 - Visual mode
-- Status bar
 
 **Phase 2 – Navigation & Editing**
 

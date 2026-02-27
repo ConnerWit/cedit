@@ -9,7 +9,6 @@ phase 1: MVP finish
     basic navigation (h j k l)
     basic insertion/deletion (typing, backspace & delete)
     visual mode implementation
-    status bar implementation
 phase 2: navigation & editing
     basic undo-redo
     word-wise navigation
