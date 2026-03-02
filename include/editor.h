@@ -6,6 +6,7 @@
 #include "gb.h"
 #include "terminal.h"
 
+
 typedef struct {
     GapBuffer *buffer;
     bool dirty;
@@ -19,6 +20,12 @@ typedef struct {
     bool is_running;
     size_t row_offset;
     size_t col_offset;
+
+    enum {
+        NORMAL,
+        INSERT,
+        VISUAL,
+    } EditorState;
 } Editor;
 
 void editor_init(Editor *editor);

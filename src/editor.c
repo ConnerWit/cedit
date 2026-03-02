@@ -5,6 +5,7 @@
 
 #include "editor.h"
 
+
 void editor_init(Editor *editor) {
     editor->buffer = gb_init(NULL, 0);
     editor->dirty = false;
@@ -18,6 +19,8 @@ void editor_init(Editor *editor) {
     WindowSize win = get_window();
     editor->screen_rows = win.rows;
     editor->screen_cols = win.cols;
+
+    editor->EditorState = NORMAL;
 }
 
 void editor_load_file(Editor *editor, const char *filename) {
@@ -140,16 +143,16 @@ static void get_cursor_screen_pos(Editor *editor,
     *out_col = col;
 }
 
-static void draw_status_bar(Editor *editor) {
+static void draw_status_bar(Editor *editor, const char *state) {
     char bar[editor->screen_cols];
     memset(bar, ' ', sizeof(bar));
 
-    int n = snprintf(bar, sizeof(bar),
-                     "  %s  |  %zu bytes",
+    size_t n = snprintf(bar, sizeof(bar),
+                     "  %s  |  %zu bytes | state: %s",
                      editor->filename ? editor->filename : "[No Name]",
-                     gb_length(editor->buffer));
+                     gb_length(editor->buffer), state);
 
-    if (n > (int)editor->screen_cols)
+    if (n > (size_t)editor->screen_cols)
         n = editor->screen_cols;
 
     if (editor->status_msg[0] != '\0') {
@@ -199,7 +202,14 @@ void editor_render(Editor *editor) {
     for (size_t r = row; r < end_row; r++)
         write(STDOUT_FILENO, "\r\n", 2);
 
-    draw_status_bar(editor);
+    const char *state;
+    switch (editor->EditorState) {
+        case INSERT:    state = "INSERT"; break;
+        case VISUAL:    state = "VISUAL"; break;
+        default:        state = "NORMAL"; break;
+    }
+
+    draw_status_bar(editor, state);
 
     size_t screen_cursor_row, screen_cursor_col;
     get_cursor_screen_pos(editor, &screen_cursor_row, &screen_cursor_col);
@@ -219,31 +229,52 @@ void editor_handle_input(Editor *editor, char key) {
     bool needs_render = false;
 
     switch (key) {
-        case '\x11':  // Ctrl-Q
-            if (!editor->quit_pending) {
+        case '\x11':  // ctrl-q
+            if (!editor->quit_pending && editor->dirty) {
                 editor->quit_pending = true;
                 snprintf(editor->status_msg,
                          sizeof(editor->status_msg),
-                         "press ctrl-q again to quit");
+                         "you have unsaved changes. press ctrl-q again to quit ");
             } else {
                 editor->is_running = false;
             }
             needs_render = true;
             break;
 
-        case '\x13':  // Ctrl-S
+        case '\x13':  // ctrl-s
             editor_save_file(editor);
             needs_render = true;
             break;
 
-        case 'k':
+        case 'k': // scroll up
             if (editor->row_offset > 0)
                 editor->row_offset--;
             needs_render = true;
             break;
 
-        case 'j':
+        case 'j': // scroll down
             editor->row_offset++;
+            needs_render = true;
+            break;
+
+        case 27: // esc key
+            if (editor->EditorState == INSERT || editor->EditorState == VISUAL) {
+                editor->EditorState = NORMAL; 
+            }
+            needs_render = true;
+            break;
+
+        case 'i': // 'insert' key
+            if (editor->EditorState == NORMAL) {
+                editor->EditorState = INSERT;
+            }
+            needs_render = true;
+            break;
+
+        case 'v': // 'visual' key
+            if (editor->EditorState == NORMAL) {
+                editor->EditorState = VISUAL;
+            }
             needs_render = true;
             break;
 
