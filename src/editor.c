@@ -4,6 +4,7 @@
 #include <unistd.h>
 
 #include "editor.h"
+#include "cursor.h"
 
 
 void editor_init(Editor *editor) {
@@ -20,7 +21,7 @@ void editor_init(Editor *editor) {
     editor->screen_rows = win.rows;
     editor->screen_cols = win.cols;
 
-    editor->EditorState = NORMAL;
+    editor->mode = MODE_NORMAL;
 }
 
 void editor_load_file(Editor *editor, const char *filename) {
@@ -104,45 +105,6 @@ void editor_save_file(Editor *editor) {
     free(text);
 }
 
-static void get_cursor_screen_pos(Editor *editor,
-                                  size_t *out_row,
-                                  size_t *out_col) {
-    size_t cursor_index = gb_cursor(editor->buffer);
-    size_t text_len = gb_length(editor->buffer);
-
-    char *text = malloc(text_len);
-    if (!text) {
-        *out_row = 0;
-        *out_col = 0;
-        return;
-    }
-
-    gb_copy_text(editor->buffer, text, text_len);
-
-    size_t row = 0;
-    size_t col = 0;
-
-    for (size_t i = 0; i < cursor_index && i < text_len; i++) {
-        char c = text[i];
-
-        if (c == '\n') {
-            row++;
-            col = 0;
-        } else {
-            col++;
-            if (col == editor->screen_cols) {
-                row++;
-                col = 0;
-            }
-        }
-    }
-
-    free(text);
-
-    *out_row = row;
-    *out_col = col;
-}
-
 static void draw_status_bar(Editor *editor, const char *state) {
     char bar[editor->screen_cols];
     memset(bar, ' ', sizeof(bar));
@@ -203,24 +165,15 @@ void editor_render(Editor *editor) {
         write(STDOUT_FILENO, "\r\n", 2);
 
     const char *state;
-    switch (editor->EditorState) {
-        case INSERT:    state = "INSERT"; break;
-        case VISUAL:    state = "VISUAL"; break;
-        default:        state = "NORMAL"; break;
+    switch (editor->mode) {
+        case MODE_INSERT:   state = "INSERT"; break;
+        case MODE_VISUAL:   state = "VISUAL"; break;
+        default:            state = "NORMAL"; break;
     }
 
     draw_status_bar(editor, state);
 
-    size_t screen_cursor_row, screen_cursor_col;
-    get_cursor_screen_pos(editor, &screen_cursor_row, &screen_cursor_col);
-
-    char buf[32];
-    int n = snprintf(buf, sizeof(buf),
-                     "\x1b[%zu;%zuH",
-                     screen_cursor_row + 1,
-                     screen_cursor_col + 1);
-
-    write(STDOUT_FILENO, buf, n);
+    cursor_render(editor);
 
     free(text);
 }
@@ -246,34 +199,33 @@ void editor_handle_input(Editor *editor, char key) {
             needs_render = true;
             break;
 
-        case 'k': // scroll up
-            if (editor->row_offset > 0)
-                editor->row_offset--;
-            needs_render = true;
-            break;
-
-        case 'j': // scroll down
-            editor->row_offset++;
-            needs_render = true;
+        case 'h':
+        case 'j':
+        case 'k':
+        case 'l':
+            if (editor->mode == MODE_NORMAL) {
+                cursor_move(editor, key);
+                needs_render = true;
+            }
             break;
 
         case 27: // esc key
-            if (editor->EditorState == INSERT || editor->EditorState == VISUAL) {
-                editor->EditorState = NORMAL; 
+            if (editor->mode == MODE_INSERT || editor->mode == MODE_VISUAL) {
+                editor->mode = MODE_NORMAL; 
             }
             needs_render = true;
             break;
 
         case 'i': // 'insert' key
-            if (editor->EditorState == NORMAL) {
-                editor->EditorState = INSERT;
+            if (editor->mode == MODE_NORMAL) {
+                editor->mode = MODE_INSERT;
             }
             needs_render = true;
             break;
 
         case 'v': // 'visual' key
-            if (editor->EditorState == NORMAL) {
-                editor->EditorState = VISUAL;
+            if (editor->mode == MODE_NORMAL) {
+                editor->mode = MODE_VISUAL;
             }
             needs_render = true;
             break;

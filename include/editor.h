@@ -3,9 +3,12 @@
 
 #include <stdbool.h>
 #include <stddef.h>
+
 #include "gb.h"
 #include "terminal.h"
 
+
+typedef enum { MODE_NORMAL, MODE_INSERT, MODE_VISUAL } EditorMode;
 
 typedef struct {
     GapBuffer *buffer;
@@ -21,11 +24,7 @@ typedef struct {
     size_t row_offset;
     size_t col_offset;
 
-    enum {
-        NORMAL,
-        INSERT,
-        VISUAL,
-    } EditorState;
+    EditorMode mode;
 } Editor;
 
 void editor_init(Editor *editor);
