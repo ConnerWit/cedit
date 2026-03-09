@@ -56,6 +56,7 @@ This produces the binary: `build/ceditor`
 - Basic key bindings (Phase 0):
   - `ctrl-s` → Save file
   - `ctrl-q` → Quit editor (prompts if there are unsaved changes)
+  - `h` / `l` → navigate left / right through file
   - `k` / `j` → Scroll up / down through file
 
 ---
