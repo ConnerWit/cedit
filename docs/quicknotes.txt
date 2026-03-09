@@ -1,0 +1,10 @@
+inserting functionality:
+    currently handle_input() does all the heavy lifting regarding the functionality for any key input in the editor program
+    now that we have modes & different categorizations of certain operations (file IO, mode navigation, buffer navigation) we
+    need to split handle_input into distinct centres of their own respective modes, we can do this by splitting it up into
+    the following functions:
+        handle_general_input() #handles central input like mode switching
+        handle_normal_input() #handles input for normal mode operations (e.g. hjkl navigation, file IO)
+        handle_insert_input() #handles input for insert mode operations (all letter, numbers, symbols)
+        handle_delete_input() #handles all deletion operations
+        handle_visual_input() #handles input for visual mode operations (copy, cut, paste, change selection)

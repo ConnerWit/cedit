@@ -16,7 +16,12 @@ int main(int argc, char *argv[]) {
 
     while (editor.is_running) {
         char key = read_key();
-        editor_handle_input(&editor, key);
+
+        switch (editor.mode) {
+            case MODE_INSERT: editor_handle_insert_input(&editor, key); break;
+            case MODE_VISUAL: editor_handle_visual_input(&editor, key); break;
+            case MODE_NORMAL: editor_handle_normal_input(&editor, key); break;
+        }
     }
 
     editor_destroy(&editor);

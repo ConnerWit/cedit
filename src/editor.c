@@ -178,7 +178,47 @@ void editor_render(Editor *editor) {
     free(text);
 }
 
-void editor_handle_input(Editor *editor, char key) {
+void editor_handle_insert_input(Editor *editor, char key) {
+    bool needs_render = false;
+
+    switch (key) {
+        case 27: // esc key
+            if (editor->mode == MODE_INSERT || editor->mode == MODE_VISUAL) {
+                editor->mode = MODE_NORMAL; 
+            }
+            needs_render = true;
+            break;
+
+        default:
+            editor->quit_pending = false;
+            break;
+    }
+
+    if (needs_render)
+        editor_render(editor);
+}
+
+void editor_handle_visual_input(Editor *editor, char key) {
+    bool needs_render = false;
+
+    switch (key) {
+        case 27: // esc key
+            if (editor->mode == MODE_INSERT || editor->mode == MODE_VISUAL) {
+                editor->mode = MODE_NORMAL; 
+            }
+            needs_render = true;
+            break;
+
+        default:
+            editor->quit_pending = false;
+            break;
+    }
+
+    if (needs_render)
+        editor_render(editor);
+}
+
+void editor_handle_normal_input(Editor *editor, char key) {
     bool needs_render = false;
 
     switch (key) {
@@ -207,13 +247,6 @@ void editor_handle_input(Editor *editor, char key) {
                 cursor_move(editor, key);
                 needs_render = true;
             }
-            break;
-
-        case 27: // esc key
-            if (editor->mode == MODE_INSERT || editor->mode == MODE_VISUAL) {
-                editor->mode = MODE_NORMAL; 
-            }
-            needs_render = true;
             break;
 
         case 'i': // 'insert' key
