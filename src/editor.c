@@ -189,8 +189,19 @@ void editor_handle_insert_input(Editor *editor, char key) {
             needs_render = true;
             break;
 
+        case 127: // modern backspace ASCII code
+        case 8: // old-school backspace code
+            gb_backspace(editor->buffer, 1);
+            needs_render = true;
+            break;
+
         default:
-            editor->quit_pending = false;
+            if (key >= 32 && key <= 126) {
+                const void *data = &key;
+                gb_insert(editor->buffer, data, 1);
+                editor->dirty = true;
+                needs_render = true;
+            }
             break;
     }
 

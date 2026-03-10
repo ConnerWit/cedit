@@ -3,8 +3,12 @@ inserting functionality:
     now that we have modes & different categorizations of certain operations (file IO, mode navigation, buffer navigation) we
     need to split handle_input into distinct centres of their own respective modes, we can do this by splitting it up into
     the following functions:
-        handle_general_input() #handles central input like mode switching
         handle_normal_input() #handles input for normal mode operations (e.g. hjkl navigation, file IO)
         handle_insert_input() #handles input for insert mode operations (all letter, numbers, symbols)
-        handle_delete_input() #handles all deletion operations
         handle_visual_input() #handles input for visual mode operations (copy, cut, paste, change selection)
+    throughout all functions mode navigation will be implemented
+
+    for logic regarding insertion specifically, i suppose it best to define a list of characters that can be inserted as text,
+        such as character, numbers and symbols. then in the switch case we will write an algorithm to efficiently see if the
+        input key matches the list of insertable characters. if we find a match, we will call gb_insert() to insert the key into
+        the buffer, marking the current buffer as dirty. if there is no match we will not need to take any action.
