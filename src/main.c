@@ -15,7 +15,7 @@ int main(int argc, char *argv[]) {
     editor_render(&editor);
 
     while (editor.is_running) {
-        char key = read_key();
+        int key = read_key();
 
         switch (editor.mode) {
             case MODE_INSERT: editor_handle_insert_input(&editor, key); break;

@@ -5,6 +5,11 @@
 
 #include "editor.h"
 
+#define ARROW_UP 1000
+#define ARROW_DOWN 1001
+#define ARROW_LEFT 1002
+#define ARROW_RIGHT 1003
+
 
 void get_cursor_screen_pos(Editor *editor,
                                   size_t *out_row,
@@ -45,7 +50,7 @@ void get_cursor_screen_pos(Editor *editor,
     *out_col = col;
 }
 
-void cursor_move(Editor *editor, char dir) {
+void cursor_move(Editor *editor, int dir) {
     size_t text_len = gb_length(editor->buffer);
     if (text_len == 0) return;
 
@@ -56,16 +61,19 @@ void cursor_move(Editor *editor, char dir) {
     size_t pos = gb_cursor(editor->buffer);
 
     switch (dir) {
+        case ARROW_LEFT:
         case 'h':
             if (pos > 0)
                 gb_move_left(editor->buffer, 1);
             break;
 
+        case ARROW_RIGHT:
         case 'l':
             if (pos < text_len)
                 gb_move_right(editor->buffer, 1);
             break;
 
+        case ARROW_UP:
         case 'k': {
             // find start of current line
             size_t cur_line_start = 0;
@@ -89,6 +97,7 @@ void cursor_move(Editor *editor, char dir) {
             break;
         }
 
+        case ARROW_DOWN:
         case 'j': {
             // find start of current line
             size_t cur_line_start = 0;

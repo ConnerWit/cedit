@@ -12,7 +12,7 @@ void terminal_init(void);
 void terminal_cleanup(void);
 
 void clear_terminal(void);
-char read_key(void);
+int read_key(void);
 WindowSize get_window(void);
 
 #endif

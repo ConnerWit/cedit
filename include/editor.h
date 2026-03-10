@@ -31,9 +31,9 @@ void editor_init(Editor *editor);
 void editor_load_file(Editor *editor, const char *filename);
 void editor_save_file(Editor *editor);
 void editor_render(Editor *editor);
-void editor_handle_normal_input(Editor *editor, char key);
-void editor_handle_insert_input(Editor *editor, char key);
-void editor_handle_visual_input(Editor *editor, char key);
+void editor_handle_normal_input(Editor *editor, int key);
+void editor_handle_insert_input(Editor *editor, int key);
+void editor_handle_visual_input(Editor *editor, int key);
 void editor_destroy(Editor *editor);
 
 #endif

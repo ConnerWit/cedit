@@ -1,3 +1,4 @@
+#include <bits/posix2_lim.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -5,6 +6,12 @@
 
 #include "editor.h"
 #include "cursor.h"
+
+#define ARROW_UP 1000
+#define ARROW_DOWN 1001
+#define ARROW_LEFT 1002
+#define ARROW_RIGHT 1003
+#define KEY_DELETE 1004
 
 
 void editor_init(Editor *editor) {
@@ -178,14 +185,12 @@ void editor_render(Editor *editor) {
     free(text);
 }
 
-void editor_handle_insert_input(Editor *editor, char key) {
+void editor_handle_insert_input(Editor *editor, int key) {
     bool needs_render = false;
 
     switch (key) {
         case 27: // esc key
-            if (editor->mode == MODE_INSERT || editor->mode == MODE_VISUAL) {
-                editor->mode = MODE_NORMAL; 
-            }
+            editor->mode = MODE_NORMAL; 
             needs_render = true;
             break;
 
@@ -195,9 +200,23 @@ void editor_handle_insert_input(Editor *editor, char key) {
             needs_render = true;
             break;
 
+        case KEY_DELETE:
+            gb_delete(editor->buffer, 1);
+            editor->dirty = true;
+            needs_render = true;
+            break;
+
         case 127: // modern backspace ASCII code
         case 8: // old-school backspace code
             gb_backspace(editor->buffer, 1);
+            needs_render = true;
+            break;
+
+        case ARROW_UP:
+        case ARROW_DOWN:
+        case ARROW_LEFT:
+        case ARROW_RIGHT:
+            cursor_move(editor, key);
             needs_render = true;
             break;
 
@@ -215,14 +234,12 @@ void editor_handle_insert_input(Editor *editor, char key) {
         editor_render(editor);
 }
 
-void editor_handle_visual_input(Editor *editor, char key) {
+void editor_handle_visual_input(Editor *editor, int key) {
     bool needs_render = false;
 
     switch (key) {
         case 27: // esc key
-            if (editor->mode == MODE_INSERT || editor->mode == MODE_VISUAL) {
-                editor->mode = MODE_NORMAL; 
-            }
+            editor->mode = MODE_NORMAL; 
             needs_render = true;
             break;
 
@@ -235,7 +252,7 @@ void editor_handle_visual_input(Editor *editor, char key) {
         editor_render(editor);
 }
 
-void editor_handle_normal_input(Editor *editor, char key) {
+void editor_handle_normal_input(Editor *editor, int key) {
     bool needs_render = false;
 
     switch (key) {
@@ -244,7 +261,7 @@ void editor_handle_normal_input(Editor *editor, char key) {
                 editor->quit_pending = true;
                 snprintf(editor->status_msg,
                          sizeof(editor->status_msg),
-                         "you have unsaved changes. press ctrl-q again to quit ");
+                         "you have unsaved changes. press ctrl-s to save or ctrl-q again to quit now ");
             } else {
                 editor->is_running = false;
             }
@@ -256,14 +273,16 @@ void editor_handle_normal_input(Editor *editor, char key) {
             needs_render = true;
             break;
 
+        case ARROW_UP:
+        case ARROW_DOWN:
+        case ARROW_LEFT:
+        case ARROW_RIGHT:
         case 'h':
         case 'j':
         case 'k':
         case 'l':
-            if (editor->mode == MODE_NORMAL) {
-                cursor_move(editor, key);
-                needs_render = true;
-            }
+            cursor_move(editor, key);
+            needs_render = true;
             break;
 
         case 'i': // 'insert' key
