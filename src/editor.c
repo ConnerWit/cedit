@@ -189,6 +189,12 @@ void editor_handle_insert_input(Editor *editor, char key) {
             needs_render = true;
             break;
 
+        case '\r': //enter key
+            gb_insert(editor->buffer, "\n", 1);
+            editor->dirty = true;
+            needs_render = true;
+            break;
+
         case 127: // modern backspace ASCII code
         case 8: // old-school backspace code
             gb_backspace(editor->buffer, 1);
