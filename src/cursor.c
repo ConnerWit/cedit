@@ -132,6 +132,27 @@ void cursor_move(Editor *editor, int dir) {
     free(text);
 }
 
+void cursor_scroll(Editor *editor) {
+    size_t row, col;
+    get_cursor_screen_pos(editor, &row, &col);
+
+    // vertical scrolling
+    size_t visible_rows = editor->screen_rows - 1;
+
+    if (row < editor->row_offset) {
+        editor->row_offset = row;
+    } else if (row >= editor->row_offset + visible_rows) {
+        editor->row_offset = row - visible_rows + 1;
+    }
+
+    // horizontal scrolling
+    if (col < editor->col_offset) {
+        editor->col_offset = col;
+    } else if (col >= editor->col_offset + (size_t)editor->screen_cols) {
+        editor->col_offset = col - editor->screen_cols + 1;
+    }
+}
+
 void cursor_render(Editor *editor) {
     size_t row, col;
     get_cursor_screen_pos(editor, &row, &col);
@@ -140,6 +161,6 @@ void cursor_render(Editor *editor) {
     int n = snprintf(buf, sizeof(buf),
                      "\x1b[%zu;%zuH",
                      (row - editor->row_offset) + 1,
-                     col + 1);
+                     (col - editor->col_offset) + 1);
     write(STDOUT_FILENO, buf, n);
 }

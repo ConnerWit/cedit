@@ -14,5 +14,6 @@ void get_cursor_screen_pos(
         );
 void cursor_move(Editor *editor, int dir);
 void cursor_render(Editor *editor);
+void cursor_scroll(Editor *editor);
 
 #endif

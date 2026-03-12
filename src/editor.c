@@ -138,6 +138,8 @@ static void draw_status_bar(Editor *editor, const char *state) {
 }
 
 void editor_render(Editor *editor) {
+    cursor_scroll(editor);
+
     write(STDOUT_FILENO, "\x1b[H\x1b[2J", 7);
 
     size_t text_len = gb_length(editor->buffer);
@@ -153,17 +155,26 @@ void editor_render(Editor *editor) {
     for (size_t i = 0; i < text_len; i++) {
         char c = text[i];
 
-        if (c == '\n' || col == editor->screen_cols) {
+        if (c == '\n') {
             if (row >= start_row && row < end_row)
                 write(STDOUT_FILENO, "\r\n", 2);
-
             row++;
             col = 0;
             continue;
         }
 
-        if (row >= start_row && row < end_row)
+        if (col == editor->col_offset + (size_t)editor->screen_cols) {
+            if (row >= start_row && row < end_row)
+                write(STDOUT_FILENO, "\r\n", 2);
+            row++;
+            col = 0;
+        }
+
+        if (row >= start_row && row < end_row &&
+            col >= editor->col_offset &&
+            col < editor->col_offset + (size_t)editor->screen_cols) {
             write(STDOUT_FILENO, &c, 1);
+        }
 
         col++;
     }
