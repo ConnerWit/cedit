@@ -7,6 +7,7 @@
 #include "gb.h"
 #include "terminal.h"
 #include "clipboard.h"
+#include "history.h"
 
 
 typedef enum { MODE_NORMAL, MODE_INSERT, MODE_VISUAL } EditorMode;
@@ -28,6 +29,7 @@ typedef struct {
     EditorMode mode;
     size_t visual_start;
     Clipboard clipboard;
+    History history;
 } Editor;
 
 void editor_init(Editor *editor);

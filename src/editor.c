@@ -7,6 +7,7 @@
 #include "editor.h"
 #include "cursor.h"
 #include "clipboard.h"
+#include "history.h"
 
 #define ARROW_UP 1000
 #define ARROW_DOWN 1001
@@ -32,6 +33,7 @@ void editor_init(Editor *editor) {
     editor->mode = MODE_NORMAL;
     editor->visual_start = 0;
     clipboard_init(&editor->clipboard);
+    history_init(&editor->history);
 }
 
 void editor_load_file(Editor *editor, const char *filename) {
@@ -227,6 +229,41 @@ void editor_render(Editor *editor) {
     free(text);
 }
 
+static void snapshot(Editor *editor) {
+    size_t text_len = gb_length(editor->buffer);
+    char *text = malloc(text_len);
+    if (!text) return;
+    gb_copy_text(editor->buffer, text, text_len);
+    history_push(&editor->history, text, text_len, gb_cursor(editor->buffer));
+    free(text);
+}
+
+static void maybe_snapshot(Editor *editor, UndoOpType op) {
+    if (editor->history.last_op != op)
+        snapshot(editor);
+    editor->history.last_op = op;
+}
+
+static void editor_undo(Editor *editor) {
+    char *text;
+    size_t text_len, cursor_pos;
+
+    if (!history_pop(&editor->history, &text, &text_len, &cursor_pos)) {
+        snprintf(editor->status_msg, sizeof(editor->status_msg), "nothing to undo");
+        return;
+    }
+
+    gb_dest(editor->buffer);
+    editor->buffer = gb_init(text, text_len);
+    free(text);
+
+    gb_move_to(editor->buffer, cursor_pos);
+    editor->dirty = true;
+    editor->history.last_op = OP_NONE;
+
+    snprintf(editor->status_msg, sizeof(editor->status_msg), "reverted");
+}
+
 static void visual_yank(Editor *editor) {
     size_t cursor_pos = gb_cursor(editor->buffer);
     size_t sel_start = editor->visual_start < cursor_pos ? editor->visual_start : cursor_pos;
@@ -252,6 +289,7 @@ static void visual_cut(Editor *editor) {
 
     if (sel_len == 0) return;
 
+    maybe_snapshot(editor, OP_CUT);
     visual_yank(editor);
 
     gb_move_to(editor->buffer, sel_start);
@@ -269,12 +307,14 @@ void editor_handle_insert_input(Editor *editor, int key) {
             break;
 
         case '\r': //enter key
+            maybe_snapshot(editor, OP_INSERT);
             gb_insert(editor->buffer, "\n", 1);
             editor->dirty = true;
             needs_render = true;
             break;
 
         case KEY_DELETE:
+            maybe_snapshot(editor, OP_DELETE);
             gb_delete(editor->buffer, 1);
             editor->dirty = true;
             needs_render = true;
@@ -282,6 +322,7 @@ void editor_handle_insert_input(Editor *editor, int key) {
 
         case 127: // modern backspace ASCII code
         case 8: // old-school backspace code
+            maybe_snapshot(editor, OP_DELETE);
             gb_backspace(editor->buffer, 1);
             needs_render = true;
             break;
@@ -296,6 +337,7 @@ void editor_handle_insert_input(Editor *editor, int key) {
 
         default:
             if (key >= 32 && key <= 126) {
+                maybe_snapshot(editor, OP_INSERT);
                 const void *data = &key;
                 gb_insert(editor->buffer, data, 1);
                 editor->dirty = true;
@@ -402,10 +444,16 @@ void editor_handle_normal_input(Editor *editor, int key) {
 
         case 'p':
             if (editor->clipboard.len > 0) {
+                maybe_snapshot(editor, OP_PASTE);
                 gb_insert(editor->buffer, editor->clipboard.data, editor->clipboard.len);
                 editor->dirty = true;
                 needs_render = true;
             }
+            break;
+
+        case 'r':
+            editor_undo(editor);
+            needs_render = true;
             break;
 
         default:
@@ -425,4 +473,5 @@ void editor_destroy(Editor *editor) {
         free(editor->filename);
 
     clipboard_free(&editor->clipboard);
+    history_free(&editor->history);
 }
