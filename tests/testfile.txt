@@ -1,3 +1,0 @@
-this is a testfile for testing the editor
-
-it all works!
