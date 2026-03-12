@@ -32,7 +32,6 @@ cedit/
 │   ├── terminal.c  # Raw terminal setup and key reading
 │   ├── clipboard.c # Yank/cut clipboard buffer
 │   └── history.c   # Undo history stack
-├── tests/          # Example text files
 ├── Makefile        # Compilation instructions
 └── README.md
 ```
