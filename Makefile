@@ -16,7 +16,7 @@ OBJS := $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/%.o,$(SRCS))
 
 DEPS := $(OBJS:.o=.d)
 
-TARGET = $(BUILD_DIR)/ceditor
+TARGET = $(BUILD_DIR)/cedit
 
 all: $(TARGET)
 

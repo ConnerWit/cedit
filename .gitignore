@@ -1,8 +1,10 @@
 # build stuff
 build/
+#testfiles
+tests/
 
 # cedit result executable
-ceditor
+cedit
 
 # program
 *.exe
