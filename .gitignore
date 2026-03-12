@@ -2,6 +2,7 @@
 build/
 #testfiles
 tests/
+testfile.txt
 
 # cedit result executable
 cedit
