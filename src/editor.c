@@ -6,6 +6,7 @@
 
 #include "editor.h"
 #include "cursor.h"
+#include "clipboard.h"
 
 #define ARROW_UP 1000
 #define ARROW_DOWN 1001
@@ -29,6 +30,8 @@ void editor_init(Editor *editor) {
     editor->screen_cols = win.cols;
 
     editor->mode = MODE_NORMAL;
+    editor->visual_start = 0;
+    clipboard_init(&editor->clipboard);
 }
 
 void editor_load_file(Editor *editor, const char *filename) {
@@ -148,24 +151,50 @@ void editor_render(Editor *editor) {
 
     gb_copy_text(editor->buffer, text, text_len);
 
+    size_t cursor_pos = gb_cursor(editor->buffer);
+    size_t sel_start = 0, sel_end = 0;
+    bool has_selection = (editor->mode == MODE_VISUAL);
+    if (has_selection) {
+        sel_start = editor->visual_start < cursor_pos ? editor->visual_start : cursor_pos;
+        sel_end   = editor->visual_start < cursor_pos ? cursor_pos : editor->visual_start;
+    }
+
     size_t row = 0, col = 0;
     size_t start_row = editor->row_offset;
     size_t end_row = start_row + editor->screen_rows - 1;
+    bool in_highlight = false;
 
     for (size_t i = 0; i < text_len; i++) {
         char c = text[i];
 
+        if (has_selection) {
+            bool should_hl = (i >= sel_start && i < sel_end);
+            if (should_hl && !in_highlight) {
+                write(STDOUT_FILENO, "\x1b[7m", 4);
+                in_highlight = true;
+            } else if (!should_hl && in_highlight) {
+                write(STDOUT_FILENO, "\x1b[0m", 4);
+                in_highlight = false;
+            }
+        }
+
         if (c == '\n') {
-            if (row >= start_row && row < end_row)
+            if (row >= start_row && row < end_row) {
+                if (in_highlight) write(STDOUT_FILENO, "\x1b[0m", 4);
                 write(STDOUT_FILENO, "\r\n", 2);
+                if (in_highlight) write(STDOUT_FILENO, "\x1b[7m", 4);
+            }
             row++;
             col = 0;
             continue;
         }
 
         if (col == editor->col_offset + (size_t)editor->screen_cols) {
-            if (row >= start_row && row < end_row)
+            if (row >= start_row && row < end_row) {
+                if (in_highlight) write(STDOUT_FILENO, "\x1b[0m", 4);
                 write(STDOUT_FILENO, "\r\n", 2);
+                if (in_highlight) write(STDOUT_FILENO, "\x1b[7m", 4);
+            }
             row++;
             col = 0;
         }
@@ -178,6 +207,8 @@ void editor_render(Editor *editor) {
 
         col++;
     }
+
+    if (in_highlight) write(STDOUT_FILENO, "\x1b[0m", 4);
 
     for (size_t r = row; r < end_row; r++)
         write(STDOUT_FILENO, "\r\n", 2);
@@ -194,6 +225,38 @@ void editor_render(Editor *editor) {
     cursor_render(editor);
 
     free(text);
+}
+
+static void visual_yank(Editor *editor) {
+    size_t cursor_pos = gb_cursor(editor->buffer);
+    size_t sel_start = editor->visual_start < cursor_pos ? editor->visual_start : cursor_pos;
+    size_t sel_end   = editor->visual_start < cursor_pos ? cursor_pos : editor->visual_start;
+    size_t sel_len   = sel_end - sel_start;
+
+    if (sel_len == 0) return;
+
+    size_t text_len = gb_length(editor->buffer);
+    char *text = malloc(text_len);
+    if (!text) return;
+
+    gb_copy_text(editor->buffer, text, text_len);
+    clipboard_set(&editor->clipboard, text + sel_start, sel_len);
+    free(text);
+}
+
+static void visual_cut(Editor *editor) {
+    size_t cursor_pos = gb_cursor(editor->buffer);
+    size_t sel_start = editor->visual_start < cursor_pos ? editor->visual_start : cursor_pos;
+    size_t sel_end   = editor->visual_start < cursor_pos ? cursor_pos : editor->visual_start;
+    size_t sel_len   = sel_end - sel_start;
+
+    if (sel_len == 0) return;
+
+    visual_yank(editor);
+
+    gb_move_to(editor->buffer, sel_start);
+    gb_delete(editor->buffer, sel_len);
+    editor->dirty = true;
 }
 
 void editor_handle_insert_input(Editor *editor, int key) {
@@ -250,7 +313,33 @@ void editor_handle_visual_input(Editor *editor, int key) {
 
     switch (key) {
         case 27: // esc key
-            editor->mode = MODE_NORMAL; 
+            editor->mode = MODE_NORMAL;
+            needs_render = true;
+            break;
+
+        case ARROW_UP:
+        case ARROW_DOWN:
+        case ARROW_LEFT:
+        case ARROW_RIGHT:
+        case 'h':
+        case 'j':
+        case 'k':
+        case 'l':
+            cursor_move(editor, key);
+            needs_render = true;
+            break;
+
+        case 'c':
+            visual_yank(editor);
+            editor->mode = MODE_NORMAL;
+            snprintf(editor->status_msg, sizeof(editor->status_msg), "yanked");
+            needs_render = true;
+            break;
+
+        case 'x':
+            visual_cut(editor);
+            editor->mode = MODE_NORMAL;
+            snprintf(editor->status_msg, sizeof(editor->status_msg), "cut");
             needs_render = true;
             break;
 
@@ -306,8 +395,17 @@ void editor_handle_normal_input(Editor *editor, int key) {
         case 'v': // 'visual' key
             if (editor->mode == MODE_NORMAL) {
                 editor->mode = MODE_VISUAL;
+                editor->visual_start = gb_cursor(editor->buffer);
             }
             needs_render = true;
+            break;
+
+        case 'p':
+            if (editor->clipboard.len > 0) {
+                gb_insert(editor->buffer, editor->clipboard.data, editor->clipboard.len);
+                editor->dirty = true;
+                needs_render = true;
+            }
             break;
 
         default:
@@ -325,4 +423,6 @@ void editor_destroy(Editor *editor) {
 
     if (editor->filename)
         free(editor->filename);
+
+    clipboard_free(&editor->clipboard);
 }

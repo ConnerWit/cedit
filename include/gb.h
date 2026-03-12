@@ -18,6 +18,8 @@ void gb_dest(GapBuffer *gb);
 // cursor movement
 GapBuffer *gb_move_left(GapBuffer *gb, size_t n);
 GapBuffer *gb_move_right(GapBuffer *gb, size_t n);
+// jump cursor to absolute position
+GapBuffer *gb_move_to(GapBuffer *gb, size_t pos);
 
 // insert 'len' bytes at the cursor position
 GapBuffer *gb_insert(GapBuffer *gb, const void *data, size_t len);

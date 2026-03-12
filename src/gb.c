@@ -248,6 +248,14 @@ GapBuffer *gb_move_right(GapBuffer *Buffer, size_t to_move) {
     return Buffer;
 }
 
+GapBuffer *gb_move_to(GapBuffer *Buffer, size_t pos) {
+    if (pos > Buffer->text_size)
+        pos = Buffer->text_size;
+    Buffer->cursor_pos = pos;
+    gb_move_gap(Buffer);
+    return Buffer;
+}
+
 GapBuffer *gb_delete(GapBuffer *Buffer, size_t n) {
     gb_move_gap(Buffer);
 
