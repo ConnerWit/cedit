@@ -3,16 +3,19 @@ phase 0: fundamental setup [DONE]
     basic file to buffer writing
     save buffer to file or new file
     text-terminal rendering
-phase 1: MVP finish
-    implement basic modes (normal, insert)
-    cursor rendering
-    basic navigation (h j k l)
+
+phase 1: MVP finish [DONE]
+    implement basic modes (normal, insert, visual)
+    basic cursor navigation (h j k l)
     basic insertion/deletion (typing, backspace & delete)
-    visual mode implementation
+    visual mode implementation (copy, cut, paste)
+    basic undo functionality
+
 phase 2: navigation & editing
-    basic undo-redo
+    basic redo functionality
     word-wise navigation
     line start-end movement
+
 phase 3: buffer management
     multiple buffers open
     buffer navigation
