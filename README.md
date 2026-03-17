@@ -5,6 +5,12 @@ Current version: **v1.0.0 (MVP Complete)**
 
 ---
 
+## Demonstration
+This GIF shows the functions of opening new files, inserting text, copying text, cutting text, pasting text, saving and closing the file.
+![Demo](docs/its-gif-with-a-hard-g.GIF)
+
+---
+
 ## Features
 - Modal editing: normal, insert, and visual modes
 - Gap buffer for efficient text insertion and deletion
