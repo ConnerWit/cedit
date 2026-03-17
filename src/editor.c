@@ -81,9 +81,12 @@ void editor_load_file(Editor *editor, const char *filename) {
 
 void editor_save_file(Editor *editor) {
     if (!editor->filename) {
-        snprintf(editor->status_msg, sizeof(editor->status_msg),
-                 "no filename provided");
-        return;
+        editor->filename = strdup("untitled.txt");
+        if (!editor->filename) {
+            snprintf(editor->status_msg, sizeof(editor->status_msg),
+                     "save failed: out of memory");
+            return;
+        }
     }
 
     size_t text_len = gb_length(editor->buffer);
@@ -121,20 +124,20 @@ static void draw_status_bar(Editor *editor, const char *state) {
     char bar[editor->screen_cols];
     memset(bar, ' ', sizeof(bar));
 
-    size_t n = snprintf(bar, sizeof(bar),
-                     "  %s  |  %zu bytes | state: %s",
-                     editor->filename ? editor->filename : "[No Name]",
-                     gb_length(editor->buffer), state);
-
-    if (n > (size_t)editor->screen_cols)
-        n = editor->screen_cols;
-
     if (editor->status_msg[0] != '\0') {
         size_t msg_len = strlen(editor->status_msg);
-        if (msg_len > editor->screen_cols)
+        if (msg_len > (size_t)editor->screen_cols)
             msg_len = editor->screen_cols;
-
         memcpy(bar, editor->status_msg, msg_len);
+        editor->status_msg[0] = '\0';
+    } else {
+        size_t n = snprintf(bar, sizeof(bar),
+                         "  %s  |  %zu bytes | state: %s",
+                         editor->filename ? editor->filename : "[No Name]",
+                         gb_length(editor->buffer), state);
+        if (n > (size_t)editor->screen_cols)
+            n = editor->screen_cols;
+        (void)n;
     }
 
     write(STDOUT_FILENO, "\x1b[7m", 4);
